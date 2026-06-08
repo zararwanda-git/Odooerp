@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         FORM VIEW
+    ============================================================ -->
+    <record id="view_inter_company_transfer_form" model="ir.ui.view">
+        <field name="name">inter.company.transfer.form</field>
+        <field name="model">inter.company.transfer</field>
+        <field name="arch" type="xml">
+            <form string="Inter-Company Stock Transfer">
+
+                <header>
+                    <button name="action_confirm"
+                            string="Confirm Transfer"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_mark_received"
+                            string="Confirm Receipt"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'confirmed'"/>
+                    <button name="action_cancel"
+                            string="Cancel"
+                            type="object"
+                            invisible="state in ('received', 'cancelled')"/>
+                    <button name="action_reset_draft"
+                            string="Reset to Draft"
+                            type="object"
+                            invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,confirmed,received"/>
+                </header>
+
+                <sheet>
+
+                    <!-- Smart buttons -->
+                    <div class="oe_button_box" name="button_box">
+
+                        <button name="action_view_source_picking"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-truck"
+                                invisible="not source_picking_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Source</span>
+                                <span class="o_stat_text">Picking</span>
+                            </div>
+                        </button>
+
+                        <button name="action_view_destination_picking"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-download"
+                                invisible="not destination_picking_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Dest.</span>
+                                <span class="o_stat_text">Picking</span>
+                            </div>
+                        </button>
+
+                        <button name="action_view_source_move"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-pencil-square-o"
+                                invisible="not source_move_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Source</span>
+                                <span class="o_stat_text">Entry</span>
+                            </div>
+                        </button>
+
+                        <button name="action_view_destination_move"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-pencil-square-o"
+                                invisible="not destination_move_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Dest.</span>
+                                <span class="o_stat_text">Entry</span>
+                            </div>
+                        </button>
+
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Source">
+                            <field name="source_company_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="source_warehouse_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="source_location_id"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Destination">
+                            <field name="destination_company_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="destination_warehouse_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="destination_location_id"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Dates">
+                            <field name="transfer_date"
+                                   readonly="state != 'draft'"/>
+                            <field name="scheduled_date"
+                                   readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Accounting">
+                            <field name="interbranch_account_id"
+                                   readonly="state != 'draft'"
+                                   options="{'no_create': True}"
+                                   help="Inter-Company Stocks clearing account. Same account used on both sides.&#10;&#10;Source:  Dr Interbranch / Cr Stock Valuation&#10;Branch:  Dr Stock Valuation / Cr Interbranch"/>
+                            <field name="source_move_id" readonly="1"/>
+                            <field name="destination_move_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Products" name="products">
+                            <field name="line_ids"
+                                   readonly="state != 'draft'"
+                                   context="{'default_transfer_id': id}"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="note" placeholder="Internal notes..."/>
+                        </page>
+                    </notebook>
+
+                    <!-- Accounting summary shown once confirmed -->
+                    <group string="Journal Entry Summary" invisible="state == 'draft'">
+                        <div colspan="2">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr class="bg-100">
+                                        <th>Step</th>
+                                        <th>Company</th>
+                                        <th>Dr</th>
+                                        <th>Cr</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1 — Transfer Out</td>
+                                        <td><field name="source_company_id" readonly="1"/></td>
+                                        <td>Inter-Company Stocks</td>
+                                        <td>Stock Valuation</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2 — Receipt Confirmed</td>
+                                        <td><field name="destination_company_id" readonly="1"/></td>
+                                        <td>Stock Valuation</td>
+                                        <td>Inter-Company Stocks ✓ cleared</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </group>
+
+                </sheet>
+
+                <chatter/>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         LIST VIEW
+    ============================================================ -->
+    <record id="view_inter_company_transfer_list" model="ir.ui.view">
+        <field name="name">inter.company.transfer.list</field>
+        <field name="model">inter.company.transfer</field>
+        <field name="arch" type="xml">
+            <list string="Inter-Company Transfers"
+                  decoration-info="state == 'draft'"
+                  decoration-primary="state == 'confirmed'"
+                  decoration-success="state == 'received'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="transfer_date"/>
+                <field name="source_company_id"/>
+                <field name="destination_company_id"/>
+                <field name="interbranch_account_id" string="Clearing Account"/>
+                <field name="source_picking_id"/>
+                <field name="destination_picking_id"/>
+                <field name="source_move_id" string="Source Entry"/>
+                <field name="destination_move_id" string="Branch Entry"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-primary="state == 'confirmed'"
+                       decoration-success="state == 'received'"
+                       decoration-danger="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         SEARCH VIEW
+    ============================================================ -->
+    <record id="view_inter_company_transfer_search" model="ir.ui.view">
+        <field name="name">inter.company.transfer.search</field>
+        <field name="model">inter.company.transfer</field>
+        <field name="arch" type="xml">
+            <search string="Search Transfers">
+                <field name="name" string="Reference"/>
+                <field name="source_company_id"/>
+                <field name="destination_company_id"/>
+                <filter string="Draft"      name="draft"      domain="[('state','=','draft')]"/>
+                <filter string="Confirmed"  name="confirmed"  domain="[('state','=','confirmed')]"/>
+                <filter string="Received"   name="received"   domain="[('state','=','received')]"/>
+                <filter string="Cancelled"  name="cancelled"  domain="[('state','=','cancelled')]"/>
+                <filter string="In Transit" name="in_transit" domain="[('state','=','confirmed')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         ACTION
+    ============================================================ -->
+    <record id="action_inter_company_transfer" model="ir.actions.act_window">
+        <field name="name">Inter-Company Transfers</field>
+        <field name="res_model">inter.company.transfer</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first inter-branch stock transfer!
+            </p>
+            <p>
+                Transfer stock between companies using a single
+                <b>Inter-Company Stocks</b> clearing account.
+                No Sales Orders or Purchase Orders required.
+            </p>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         TRANSFER LINE — LIST VIEW (used by line_ids one2many)
+    ============================================================ -->
+    <record id="view_inter_company_transfer_line_list" model="ir.ui.view">
+        <field name="name">inter.company.transfer.line.list</field>
+        <field name="model">inter.company.transfer.line</field>
+        <field name="arch" type="xml">
+            <list string="Transfer Lines" editable="bottom">
+                <field name="product_id"/>
+                <field name="available_qty" string="On Hand (Source)" readonly="1"/>
+                <field name="quantity"/>
+                <field name="product_uom_id" string="UoM"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+
+    <!-- ============================================================
+         Company form — default interbranch account
+         Adds an "Inter-Branch Transfers" tab to the company settings
+         so users can set the default clearing account once per company.
+    ============================================================ -->
+    <record id="view_company_interbranch_account" model="ir.ui.view">
+        <field name="name">res.company.interbranch.account</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Inter-Branch Transfers" name="interbranch">
+                    <group string="Default Clearing Account">
+                        <field name="interbranch_account_id"
+                               options="{'no_create': True}"
+                               help="Pre-filled on every new inter-company transfer for this company. Set to your Inter-Company Stocks account."/>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        <strong>How the clearing account works:</strong><br/>
+                        Stock out (source): <code>Dr Inter-Company Stocks / Cr Stock Valuation</code><br/>
+                        Stock in (branch):  <code>Dr Stock Valuation / Cr Inter-Company Stocks</code><br/><br/>
+                        The account balance equals the value of stock currently in transit.
+                        It nets to zero once the branch confirms receipt.
+                    </div>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+</odoo>

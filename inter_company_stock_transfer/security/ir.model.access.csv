@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_inter_company_transfer_user,inter.company.transfer user,model_inter_company_transfer,group_inter_company_transfer_user,1,1,1,0
+access_inter_company_transfer_manager,inter.company.transfer manager,model_inter_company_transfer,group_inter_company_transfer_manager,1,1,1,1
+access_inter_company_transfer_line_user,inter.company.transfer.line user,model_inter_company_transfer_line,group_inter_company_transfer_user,1,1,1,0
+access_inter_company_transfer_line_manager,inter.company.transfer.line manager,model_inter_company_transfer_line,group_inter_company_transfer_manager,1,1,1,1

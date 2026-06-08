@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Root menu under Inventory > Operations -->
+    <menuitem
+        id="menu_inter_company_transfer"
+        name="Inter-Company Transfers"
+        parent="stock.menu_stock_warehouse_mgmt"
+        action="action_inter_company_transfer"
+        sequence="50"
+        groups="inter_company_stock_transfer.group_inter_company_transfer_user"/>
+
+</odoo>
