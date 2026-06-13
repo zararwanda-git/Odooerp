@@ -1,0 +1,60 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* internal_transfer_landed_cost
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: Arcivo <info@arcivo.com>\n"
+"Language-Team: Arabic\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+
+#. module: internal_transfer_landed_cost
+#: model:ir.ui.view,name:internal_transfer_landed_cost.view_stock_landed_cost_form_inherit_internal
+msgid "stock.landed.cost.form.inherit.internal.transfer"
+msgstr "نموذج تكلفة الشحن مع دعم التحويلات الداخلية"
+
+#. module: internal_transfer_landed_cost
+#: model:ir.ui.view,name:internal_transfer_landed_cost.view_picking_form_inherit_lc_button
+msgid "stock.picking.form.inherit.internal.lc.button"
+msgstr "زر تكلفة الشحن في نموذج التحويل"
+
+#. module: internal_transfer_landed_cost
+#: model:ir.ui.view,name:internal_transfer_landed_cost.view_picking_form_inherit_lc_create
+msgid "stock.picking.form.inherit.internal.lc.create"
+msgstr "زر إنشاء تكلفة شحن في نموذج التحويل"
+
+#. module: internal_transfer_landed_cost
+#: code:internal_transfer_landed_cost/models/stock_landed_cost.py:0
+msgid "You cannot apply landed costs on the chosen %s(s). Landed costs can only be applied for products with FIFO or average costing method."
+msgstr "لا يمكنك تطبيق تكاليف الشحن على %s المختارة. يمكن تطبيق تكاليف الشحن فقط على المنتجات بطريقة تكلفة FIFO أو المتوسط."
+
+#. module: internal_transfer_landed_cost
+#: code:internal_transfer_landed_cost/models/stock_landed_cost.py:1
+msgid "Cost and adjustments lines do not match. You should maybe recompute the landed costs."
+msgstr "بنود التكلفة والتعديلات غير متطابقة. يجب إعادة حساب تكاليف الشحن."
+
+#. module: internal_transfer_landed_cost
+#: code:internal_transfer_landed_cost/models/stock_landed_cost.py:2
+msgid "Landed Cost: %s"
+msgstr "تكلفة الشحن: %s"
+
+#. module: internal_transfer_landed_cost
+#: code:internal_transfer_landed_cost/models/stock_picking.py:0
+msgid "Landed Costs"
+msgstr "تكاليف الشحن"
+
+#. module: internal_transfer_landed_cost
+#: code:internal_transfer_landed_cost/models/stock_picking.py:1
+msgid "Create Landed Cost"
+msgstr "إنشاء تكلفة شحن"
+
+#. module: internal_transfer_landed_cost
+#: code:internal_transfer_landed_cost/views/stock_picking_views.xml:0
+msgid "Add Landed Cost"
+msgstr "إضافة تكلفة شحن"

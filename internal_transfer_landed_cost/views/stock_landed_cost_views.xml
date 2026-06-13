@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_stock_landed_cost_form_inherit_internal" model="ir.ui.view">
+        <field name="name">stock.landed.cost.form.inherit.internal.transfer</field>
+        <field name="model">stock.landed.cost</field>
+        <field name="inherit_id" ref="stock_landed_costs.view_stock_landed_cost_form"/>
+        <field name="arch" type="xml">
+            <field name="picking_ids" position="attributes">
+                <attribute name="domain">[
+                    ('picking_type_id.code', 'in', ['incoming', 'internal']),
+                    ('state', '=', 'done')
+                ]</attribute>
+            </field>
+        </field>
+    </record>
+
+</odoo>

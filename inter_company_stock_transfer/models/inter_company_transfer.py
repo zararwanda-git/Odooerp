@@ -224,6 +224,57 @@ class InterCompanyTransfer(models.Model):
                 })
         return lots_by_product
 
+    def _auto_validate_picking(self, picking, company):
+        """
+        Set done = reserved for all move lines and validate the picking
+        without wizard dialogs (immediate transfer or backorder).
+
+        Called from action_confirm() so the user does not need to open
+        either picking manually.
+        """
+        picking = picking.sudo().with_company(company)
+
+        if picking.state in ('waiting', 'confirmed'):
+            picking.action_assign()
+
+        for move in picking.move_ids:
+            lines = move.move_line_ids
+            if not lines:
+                continue
+            for ml in lines:
+                if ml.quantity:
+                    continue
+                try:
+                    done = ml.reserved_qty
+                except AttributeError:
+                    done = 0.0
+                if not done:
+                    done = move.product_uom_qty / len(lines)
+                ml.write({'quantity': done})
+
+        result = picking.with_context(
+            skip_backorder=True,
+            picking_ids_not_to_backorder=picking.ids,
+        ).button_validate()
+
+        if isinstance(result, dict) and result.get('res_model'):
+            model = result['res_model']
+            ctx = result.get('context') or {}
+            res_id = result.get('res_id')
+            try:
+                wizard = self.env[model].sudo().with_context(**ctx)
+                if res_id:
+                    wizard = wizard.browse(res_id)
+                if hasattr(wizard, 'process'):
+                    wizard.process()
+                elif hasattr(wizard, 'process_cancel_backorder'):
+                    wizard.process_cancel_backorder()
+            except Exception as e:
+                _logger.warning(
+                    '[ICT] _auto_validate_picking: wizard %s could not be '
+                    'processed automatically: %s', model, e,
+                )
+
     def _create_destination_picking(self):
         """
         Create the destination picking using INTERNAL picking type.
@@ -621,20 +672,20 @@ class InterCompanyTransfer(models.Model):
 
     def action_confirm(self):
         """
-        Validate settings and create the source picking in a ready-to-pick
-        state so the user can open it, select the exact serial numbers they
-        want to transfer, and validate it directly on the picking.
+        Validate settings then fully automate both source and destination
+        pickings without any manual intervention on the individual pickings.
 
-        When the source picking is validated, StockPicking.button_validate()
-        detects it is the source picking of a confirmed inter-company transfer
-        and automatically:
-          - posts the source journal entry (Dr Interbranch / Cr Stock Valuation)
-          - creates the destination picking
-          - notifies branch users
+        Flow triggered by a single "Confirm Transfer" click:
+          1. Create + auto-validate source picking
+             → StockPicking override calls _on_source_picking_validated()
+               which posts the source journal entry and creates the
+               destination picking.
+          2. Auto-validate destination picking
+             → StockPicking override calls action_mark_received()
+               which fixes move values, posts the destination journal
+               entry, and sets state = received.
 
-        The transfer then moves to state=confirmed and waits for the branch
-        to receive and validate the destination picking, which triggers
-        action_mark_received() via the same StockPicking override.
+        The transfer moves directly from draft to received in one step.
         """
         self.ensure_one()
         if not self.line_ids:
@@ -644,14 +695,27 @@ class InterCompanyTransfer(models.Model):
         self._check_product_quantities()
         self._check_accounting_settings()
 
-        # Create source picking and reserve stock so serials are suggested.
-        # Do NOT validate — the user selects serials on the picking directly.
         source_picking = self._create_source_picking()
 
         self.write({
             'state': 'confirmed',
             'source_picking_id': source_picking.id,
         })
+
+        # Auto-validate the source picking. The StockPicking.button_validate()
+        # override detects a confirmed transfer with no destination picking and
+        # fires _on_source_picking_validated(), which posts the source journal
+        # entry and creates the destination picking.
+        self._auto_validate_picking(source_picking, self.source_company_id)
+
+        # _on_source_picking_validated() has written destination_picking_id.
+        # Auto-validate it so the StockPicking override fires
+        # action_mark_received(), which fixes SVL, posts the destination
+        # journal entry, and sets state = received.
+        if self.destination_picking_id:
+            self._auto_validate_picking(
+                self.destination_picking_id, self.destination_company_id
+            )
 
         return {
             'type': 'ir.actions.act_window',

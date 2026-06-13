@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_picking_form_inherit_lc_button" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.internal.lc.button</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_landed_costs" type="object"
+                        class="oe_stat_button" icon="fa-money"
+                        invisible="picking_type_code != 'internal' or internal_landed_cost_count == 0">
+                    <field name="internal_landed_cost_count" widget="statinfo"
+                           string="Landed Costs"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <record id="view_picking_form_inherit_lc_create" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.internal.lc.create</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button name="action_open_new_landed_cost" type="object"
+                        string="Add Landed Cost" class="btn-secondary"
+                        invisible="picking_type_code != 'internal' or state != 'done'"/>
+            </header>
+        </field>
+    </record>
+
+</odoo>
