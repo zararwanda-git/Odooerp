@@ -368,35 +368,31 @@ class InterCompanyTransfer(models.Model):
             ))
         return account
 
-    def _get_stock_journal(self, company=None):
-        Journal = self.env['account.journal'].sudo()
+    def _get_stock_journal(self, product, company=None):
+        """
+        Use the same Inventory Valuation journal Odoo's own automated stock
+        valuation posts to: product.category.property_stock_journal
+        (Inventory > Configuration > Settings > Inventory Valuation >
+        Journal, company-dependent, overridable per product category).
+        """
         company = company or self.source_company_id
+        category = product.categ_id
 
         companies_to_try = [company]
         if company.parent_id and company.parent_id not in companies_to_try:
             companies_to_try.append(company.parent_id)
-        main_company = self.env['res.company'].sudo().search([], order='id asc', limit=1)
-        if main_company not in companies_to_try:
-            companies_to_try.append(main_company)
 
         for co in companies_to_try:
-            journal = Journal.search([
-                ('company_id', '=', co.id),
-                ('type', '=', 'general'),
-                '|', ('code', 'ilike', 'STJ'),
-                     ('name', 'ilike', 'Miscellaneous'),
-            ], limit=1)
+            journal = category.with_company(co).property_stock_journal
             if journal:
                 return journal
 
         raise UserError(_(
-            "No Miscellaneous/Inventory Valuation journal found for company "
-            "'%s' (or its parent). Inter-company transfer entries must not "
-            "post to an unrelated journal (e.g. a POS journal) — create a "
-            "'general' type journal (e.g. code 'STJ', named 'Inventory "
-            "Valuation' or 'Miscellaneous Operations') for this company under "
-            "Accounting > Configuration > Journals before confirming transfers.",
-            company.name,
+            "No Inventory Valuation journal configured for category '%s' in "
+            "company '%s' (or its parent). Set it under Inventory > "
+            "Configuration > Settings > Inventory Valuation > Journal (or on "
+            "the product category directly) before confirming transfers.",
+            category.display_name, company.name,
         ))
 
     def _build_line_values(self):
@@ -416,7 +412,7 @@ class InterCompanyTransfer(models.Model):
         Dr  Inter-Company Stocks    $value   (branch owes us this)
         Cr  Stock Valuation         $value   (stock leaves our books)
         """
-        journal = self._get_stock_journal()
+        journal = self._get_stock_journal(line_values[0]['product'])
         move_lines = []
         for lv in line_values:
             label = _('%(ref)s | %(product)s × %(qty)s %(uom)s → %(dest)s',
@@ -449,7 +445,7 @@ class InterCompanyTransfer(models.Model):
         Dr  Stock Valuation         $value   (stock enters branch books)
         Cr  Inter-Company Stocks    $value   (clears the source debit — nets to zero)
         """
-        journal = self._get_stock_journal(company=self.destination_company_id)
+        journal = self._get_stock_journal(line_values[0]['product'], company=self.destination_company_id)
         move_lines = []
         for lv in line_values:
             label = _('%(ref)s | %(product)s × %(qty)s %(uom)s ← %(src)s',
