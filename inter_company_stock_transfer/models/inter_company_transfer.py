@@ -241,8 +241,9 @@ class InterCompanyTransfer(models.Model):
             lines = move.move_line_ids
             if not lines:
                 continue
+            has_picked_field = 'picked' in lines._fields
             for ml in lines:
-                if ml.quantity:
+                if ml.quantity and (not has_picked_field or ml.picked):
                     continue
                 try:
                     done = ml.reserved_qty
@@ -250,7 +251,10 @@ class InterCompanyTransfer(models.Model):
                     done = 0.0
                 if not done:
                     done = move.product_uom_qty / len(lines)
-                ml.write({'quantity': done})
+                vals = {'quantity': done}
+                if has_picked_field:
+                    vals['picked'] = True
+                ml.write(vals)
 
         result = picking.with_context(
             skip_backorder=True,
