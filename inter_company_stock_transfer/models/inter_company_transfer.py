@@ -234,14 +234,34 @@ class InterCompanyTransfer(models.Model):
         """
         picking = picking.sudo().with_company(company)
 
-        if picking.state in ('waiting', 'confirmed'):
+        if picking.state not in ('done', 'cancel'):
             picking.action_assign()
+
+        has_picked_field = 'picked' in self.env['stock.move.line']._fields
 
         for move in picking.move_ids:
             lines = move.move_line_ids
+            _logger.info(
+                '[ICT] _auto_validate_picking | picking: %s | move: %s | '
+                'state: %s | demand: %s | lines: %s | reserved: %s',
+                picking.name, move.display_name, move.state,
+                move.product_uom_qty, len(lines),
+                sum(lines.mapped('quantity')) if lines else 0.0,
+            )
             if not lines:
+                vals = {
+                    'move_id': move.id,
+                    'product_id': move.product_id.id,
+                    'product_uom_id': move.product_uom.id,
+                    'quantity': move.product_uom_qty,
+                    'location_id': move.location_id.id,
+                    'location_dest_id': move.location_dest_id.id,
+                    'company_id': move.company_id.id,
+                }
+                if has_picked_field:
+                    vals['picked'] = True
+                self.env['stock.move.line'].sudo().create(vals)
                 continue
-            has_picked_field = 'picked' in lines._fields
             for ml in lines:
                 if ml.quantity and (not has_picked_field or ml.picked):
                     continue
