@@ -380,18 +380,22 @@ class InterCompanyTransfer(models.Model):
             companies_to_try.append(main_company)
 
         for co in companies_to_try:
-            for domain in [
-                [('company_id', '=', co.id), ('code', 'ilike', 'STJ')],
-                [('company_id', '=', co.id), ('type', 'in', ['general', 'miscellaneous'])],
-                [('company_id', '=', co.id)],
-            ]:
-                journal = Journal.search(domain, limit=1)
-                if journal:
-                    return journal
+            journal = Journal.search([
+                ('company_id', '=', co.id),
+                ('type', '=', 'general'),
+                '|', ('code', 'ilike', 'STJ'),
+                     ('name', 'ilike', 'Miscellaneous'),
+            ], limit=1)
+            if journal:
+                return journal
 
         raise UserError(_(
-            "No journal found for company '%s' or its parent. "
-            "Please configure at least one accounting journal on the parent company.",
+            "No Miscellaneous/Inventory Valuation journal found for company "
+            "'%s' (or its parent). Inter-company transfer entries must not "
+            "post to an unrelated journal (e.g. a POS journal) — create a "
+            "'general' type journal (e.g. code 'STJ', named 'Inventory "
+            "Valuation' or 'Miscellaneous Operations') for this company under "
+            "Accounting > Configuration > Journals before confirming transfers.",
             company.name,
         ))
 
